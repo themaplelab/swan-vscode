@@ -10,14 +10,14 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:extension.dataflow"
+		"onCommand:extension.start"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "extension.dataflow",
-				"title": "Generate Data Flow"
+				"command": "extension.start",
+				"title": "Start Engine"
 			}
 		],
 		"viewsContainers": {

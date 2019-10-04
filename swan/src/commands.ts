@@ -5,12 +5,12 @@ const io = require('socket.io')();
 
 const port = 4040;
 
+let GlobalSocket : any = undefined;
+
 // TODO: Make sure the frontend context is enforced
 // Related: https://github.com/Microsoft/vscode/issues/10471
 
 export function activate(context: vscode.ExtensionContext) {
-
-	let GlobalSocket : any;
 
 	let pathProvider = new tree.TaintAnalysisPathProvider();
 
@@ -51,8 +51,12 @@ export function activate(context: vscode.ExtensionContext) {
 					vscode.commands.executeCommand('commands.taintAnalysisResults');
 				});
 				
-				socket.on('disconnect', (socket : any) => {
+				socket.on('disconnect', (data : any) => {
 					io.off();
+				});
+
+				socket.on('error', (e : any) => {
+					vscode.window.showErrorMessage("JVM error: " + e);
 				});
 			});
 			io.listen(4040);
@@ -78,7 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
 		try {
 			io.to(GlobalSocket).emit("disconnect");
 		} catch (e) {
-			vscode.window.showErrorMessage("Could not stop SWAN: " + e);
+			vscode.window.showErrorMessage("Could not stop SWAN JVM: " + e);
 		}
 	});
 
@@ -103,7 +107,15 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(generateDataFlow);
 }
 
-export function deactivate() {}
+export function deactivate() {
+	if (GlobalSocket !== undefined) {
+		try {
+			io.to(GlobalSocket).emit("disconnect");
+		} catch (e) {
+			vscode.window.showErrorMessage("Could not stop SWAN JVM: " + e);
+		}
+	}
+}
 
 export class OpenFileCommand implements vscode.Command {
 	title: string = 'Open File';	command: string = 'openFile';

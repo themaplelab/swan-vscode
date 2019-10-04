@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
+import * as commands from './commands';
 var path = require("path");
-var http = require('http');
 
-var port = 8081;
 
 // NOTES:
 // Implicit that the first element is the source and the last is the sink.
@@ -19,61 +18,14 @@ export interface ElementEntity {
 	location: string;
 }
 
-export function activate(context: vscode.ExtensionContext) {
-
-	let pathProvider = new TaintAnalysisPathProvider();
-
-	let disposable = vscode.commands.registerCommand('extension.dataflow', () => {
-
-		vscode.window.createTreeView(
-			'taintAnalysisPanel',
-			{
-				treeDataProvider: pathProvider
-			}
-		);
-		
-	});
-
-	let openFileCommand = vscode.commands.registerCommand('openFile', (filename : string) => {
-		vscode.workspace.openTextDocument(filename).then(doc => {
-			vscode.window.showTextDocument(doc);
-
-		});
-	});
-
-	let start = vscode.commands.registerCommand('extension.start', () => {
-		var server = http.createServer();
-		server.on('request', function(request : any, response : any) {
-			if (request.method === 'POST') {
-				request.on('data', function(data : any) {
-					pathProvider.addPath(JSON.parse(data));
-					vscode.commands.executeCommand('extension.dataflow');
-					response.writeHead(200);
-					response.end();
-				});
-			}
-		});
-		 
-		server.listen(port);
-	});
-		
-	context.subscriptions.push(openFileCommand);
-	context.subscriptions.push(disposable);
-	context.subscriptions.push(start);
-}
-
-
-// this method is called when your extension is deactivated
-export function deactivate() {}
-
-
-class TaintAnalysisPathProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+export class TaintAnalysisPathProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
 
 	onDidChangeTreeData?: vscode.Event<vscode.TreeItem|null|undefined>|undefined;
 
 	data : TaintPath[] = [];
 
-	addPath(json : TaintAnalysisPathsJSON) : void {
+	setPaths(json : TaintAnalysisPathsJSON) : void {
+        this.data = [];
 		json.paths.forEach((p : PathsEntity) => {
 			const name = p.pathName;
 			let counter : number = 0;
@@ -82,15 +34,15 @@ class TaintAnalysisPathProvider implements vscode.TreeDataProvider<vscode.TreeIt
 				if (counter === 0) {
 					elements.push(new SourceElement(
 						path.parse(element.file).base, 
-						new OpenFileCommand(element.file)));
+						new commands.OpenFileCommand(element.file)));
 				} else if (counter === p.elements.length - 1) {
 					elements.push(new SinkElement(
 						path.parse(element.file).base, 
-						new OpenFileCommand(element.file)));
+						new commands.OpenFileCommand(element.file)));
 				} else {
 					elements.push(new IntermediateElement(
 						path.parse(element.file).base, 
-						new OpenFileCommand(element.file)));
+						new commands.OpenFileCommand(element.file)));
 				}
 				counter++;
 			});
@@ -190,14 +142,4 @@ class SinkElement extends PathElement {
 		light: path.join(__filename, '..', '..', 'resources', 'light', 'sink_light.svg'),
 		dark: path.join(__filename, '..', '..', 'resources', 'dark', 'sink_dark.svg')
 	};
-}
-
-class OpenFileCommand implements vscode.Command {
-	title: string = 'Open File';	command: string = 'openFile';
-	tooltip?: string | undefined;
-	arguments?: any[] | undefined;
-
-	constructor(filename : string) {
-		this.arguments = [filename];
-	}
 }

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import * as commands from './commands';
+import * as commands from './swan';
 var path = require("path");
 
 

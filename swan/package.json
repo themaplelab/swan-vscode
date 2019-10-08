@@ -10,26 +10,26 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:commands.startSWAN"
+		"onCommand:swan.runTaintAnalysis"
 	],
-	"main": "./out/commands.js",
+	"main": "./out/swan.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "commands.startSWAN",
+				"command": "swan.startSWAN",
 				"title": "Start SWAN"
 			},
 			{
-				"command": "commands.stopSWAN",
+				"command": "swan.stopSWAN",
 				"title": "Stop SWAN"
 			},
 			{
-				"command": "commands.runTaintAnalysis",
+				"command": "swan.runTaintAnalysis",
 				"title": "Run Taint Analysis"
 			},
 			{
-				"command": "commands.generateDataFlow",
-				"title": "Generate Data Flow"
+				"command": "swan.compile",
+				"title": "Compile"
 			}
 		],
 		"viewsContainers": {
@@ -52,45 +52,100 @@
 		"menus": {
 			"view/title": [
 				{
-					"command": "commands.startSWAN",
-					"when": "view == taintAnalysisSideBar && SWANStarted == false"
-				},
-				{
-					"command": "commands.stopSWAN",
-					"when": "view == taintAnalysisSideBar && SWANStarted == true"
-				},
-				{
-					"command": "commands.generateDataFlow",
-					"when": "view == taintAnalysisSideBar && SWANStarted"
-				},
-				{
-					"command": "commands.runTaintAnalysis",
-					"when": "view == taintAnalysisSideBar && SWANStarted && dataFlowGenerated"
+					"command": "swan.runTaintAnalysis",
+					"when": "view == taintAnalysisSideBar"
 				}
 			],
 			"commandPalette": [
 				{
-					"command": "commands.startSWAN",
+					"command": "swan.startSWAN",
 					"title": "Start SWAN",
 					"when": "false"
 				},
 				{
-					"command": "commands.stopSWAN",
+					"command": "swan.stopSWAN",
 					"when": "false",
 					"title": "Stop SWAN"
 				},
 				{
-					"command": "commands.generateDataFlow",
+					"command": "swan.compile",
 					"when": "false",
-					"title": "Generate Data Flow"
+					"title": "Compile"
 				},
 				{
-					"command": "commands.runTaintAnalysis",
+					"command": "swan.runTaintAnalysis",
 					"when": "false",
 					"title": "Run Taint Analysis"
 				}
 			]
-		}
+		},
+		"configuration": {
+			"title": "SWAN",
+			"properties": {
+			  "swan.JVMOptions": {
+				"type": "string",
+				"default": ""
+			  },
+			  "swan.ProjectType": {
+				"type": "string",
+				"enum": ["XCode Project", "Single file"],
+				"default": "XCode Project"
+			  },
+			  "swan.SingleFilePath": {
+				"type": "string",
+				"default": "REPLACE ME",
+				"format": "uri",
+				"markdownDescription": "Path to the `.swift` file to analyze (\"Single file\" mode)."
+			  },
+			  "swan.XCodeProjectPath": {
+				"type": "string",
+				"default": "REPLACE ME",
+				"format": "uri",
+				"markdownDescription": "Path to your `.xcodeproj` to analyze (\"XCode Project mode\")."
+			  },
+			  "swan.XCodeOptions": {
+				"type": "string",
+				"default": "CODE_SIGN_IDENTITY=\"\" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=\"NO\"",
+				"markdownDescription": "Extra xcodebuild options. `-project`, `-scheme`, `clean`, `build`, `SWIFT_OPTIMIZATION_LEVEL`, `SWIFT_EXEC`, `SWIFT_COMPILATION_MODE` are already defined elsewhere."
+			  },
+			  "swan.XCodeScheme": {
+				"type": "string",
+				"default": "REPLACE ME",
+				"markdownDescription": "**REQUIRED:** `-scheme <...>` parameter to `xcodebuild`."
+			  },
+			  "swan.TaintAnalysisMode": {
+				  "type": "boolean",
+				  "enum": ["Regular", "Refined"],
+				  "default": "Regular",
+				  "markdownDescription": "**Regular:** using known sources, sinks, and sanitizers (SSS).  **Refined:** querry-like taint analysis which uses user defined SSS. Can also be used in comibination with known SSS."
+			  },
+			  "swan.CustomSSS": {
+				"type": "object",
+				"properties": {
+					"swan.Sources": {
+						"type": "array",
+						"items": {
+							"type":"string"
+						}
+					},
+					"swan.Sinks": {
+						"type": "array",
+						"items": {
+							"type":"string"
+						}
+					},
+					"swan.Santizers": {
+						"type": "array",
+						"items": {
+							"type":"string"
+						}
+					}
+				},
+				"default": {"swan.Sources":[], "swan.Sinks":[], "swan.Sanitzers":[]},
+				"markdownDescription": "Custom sources, sinks, and santizers (SSS) for \"Refined\" mode. If a field is left blank, the default will be used for it. E.g. In \"Refined\" mode, if no sources, a single sink, and no sanitizers are specified by the user, SWAN will find all paths using from the default sources considering the default santizers that go to the user's sink. **NOTE:** A function signature must be prefixed with the name of the file it is in. e.g. `testTaint.source() -> Swift.String` where `testTaint.swift` is the file `source()` is in."
+			  }
+			}
+		  }
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",

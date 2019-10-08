@@ -20,7 +20,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let runTaintAnalysis = vscode.commands.registerCommand('swan.runTaintAnalysis', () => {
 		if (SWAN_STARTED && PROJECT_COMPILED && !COMPILING) {
-			vscode.window.showInformationMessage("Running Taint Analysis...");
+			vscode.window.showInformationMessage("Running taint analysis...");
 			io.to(GLOBAL_SOCKET).emit("runTaintAnalysis");
 		} else if (!SWAN_STARTED && !PROJECT_COMPILED && !COMPILING) {
 			vscode.commands.executeCommand("swan.startSWAN");
@@ -36,6 +36,7 @@ export function activate(context: vscode.ExtensionContext) {
 				treeDataProvider: pathProvider
 			}
 		);
+		vscode.window.showInformationMessage("Finished taint analysis...");
 	});
 
 	let startSWAN = vscode.commands.registerCommand('swan.startSWAN', () => {
@@ -70,6 +71,8 @@ export function activate(context: vscode.ExtensionContext) {
 				});
 			});
 			io.listen(4040);
+
+			vscode.window.showInformationMessage("Looking for existing SWAN JVM process...");
 
 			timer = setTimeout((() => {
 				if (!SWAN_STARTED) {
@@ -136,14 +139,16 @@ export function activate(context: vscode.ExtensionContext) {
 							console.log("error");
 							return;
 						} else {
-							fs.readFile("/tmp/SWAN_arguments.txt", {encoding: 'utf-8'}, function(err:any, data:any){
+							fs.readFile("/tmp/SWAN_arguments.txt", {encoding: 'utf-8'}, function(err:any, args:any){
 								if (!err) {
-									console.log(data);
+									console.log(args);
+									// When finished
 									COMPILING = false;
 									vscode.commands.executeCommand("swan.runTaintAnalysis");
 								} else {
 									vscode.window.showErrorMessage("Could not open intercept swiftc arguments!");
 									COMPILING = false;
+									return;
 								}
 							});
 						}

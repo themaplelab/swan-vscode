@@ -94,13 +94,11 @@
 			  "swan.SingleFilePath": {
 				"type": "string",
 				"default": "REPLACE ME",
-				"format": "uri",
 				"markdownDescription": "Path to the `.swift` file to analyze (\"Single file\" mode)."
 			  },
 			  "swan.XCodeProjectPath": {
 				"type": "string",
 				"default": "REPLACE ME",
-				"format": "uri",
 				"markdownDescription": "Path to your `.xcodeproj` to analyze (\"XCode Project mode\")."
 			  },
 			  "swan.XCodeOptions": {

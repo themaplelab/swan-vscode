@@ -31,11 +31,15 @@ export function activate(context: vscode.ExtensionContext) {
 		if (SWAN_STARTED && PROJECT_COMPILED && !COMPILING) {
 			vscode.window.showInformationMessage("Running taint analysis...");
 			const SWANConfig = vscode.workspace.getConfiguration('swan');
-			let sss : SSSJson = {
-				"Sources" : (SWANConfig.get("Sources") !== undefined) ? SWANConfig.get("Sources") : [], 
-				"Sinks" : (SWANConfig.get("Sinks") !== undefined) ? SWANConfig.get("Sinks") : [], 
-				"Sanitizers" : (SWANConfig.get("Sanitizers") !== undefined) ? SWANConfig.get("Sanitizers") : []
-			};
+			let sss : SSSJson = {"Sources" : [], "Sinks" : [], "Sanitizers" : []};
+			if (SWANConfig.get('TaintAnalysisMode') === "Refined") {
+				let CustomSSS : any = SWANConfig.get("CustomSSS");
+				sss = {
+					"Sources" : (CustomSSS["Sources"] !== undefined) ? CustomSSS["Sources"] : [], 
+					"Sinks" : (CustomSSS["Sinks"] !== undefined) ? CustomSSS["Sinks"] : [], 
+					"Sanitizers" : (CustomSSS["Sanitizers"] !== undefined) ? CustomSSS["Sanitizers"] : []
+				};
+			}
 			io.to(GLOBAL_SOCKET).emit("runTaintAnalysis", sss);
 		} else if (!SWAN_STARTED && !PROJECT_COMPILED && !COMPILING) {
 			vscode.commands.executeCommand("swan.startSWAN");
@@ -91,6 +95,10 @@ export function activate(context: vscode.ExtensionContext) {
 				// When disconnected, stop listening.
 				socket.on('disconnect', (data : any) => {
 					io.off();
+					vscode.window.showInformationMessage("Disconnected from SWAN JVM");
+					SWAN_STARTED = false;
+					PROJECT_COMPILED = false;
+					COMPILING = false; 
 				});
 
 				socket.on('generatedSDG', () => {
@@ -222,8 +230,10 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 			
 			if (!err) {
-				vscode.window.showInformationMessage("Compiling Swift file...");
+				vscode.window.showInformationMessage("Compiling and translating Swift file...");
 			}
+
+			io.to(GLOBAL_SOCKET).emit("generateSDG", ["", "-emit-silgen", "-Onone", SWANConfig.get("SingleFilePath")]);
 
 			if (err) {
 				vscode.window.showErrorMessage("Could not compile Swift application");

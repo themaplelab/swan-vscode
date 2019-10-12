@@ -112,7 +112,7 @@
 				"markdownDescription": "**REQUIRED:** `-scheme <...>` parameter to `xcodebuild`."
 			  },
 			  "swan.TaintAnalysisMode": {
-				  "type": "boolean",
+				  "type": "string",
 				  "enum": ["Regular", "Refined"],
 				  "default": "Regular",
 				  "markdownDescription": "**Regular:** using known sources, sinks, and sanitizers (SSS).  **Refined:** querry-like taint analysis which uses user defined SSS. Can also be used in comibination with known SSS."
@@ -120,19 +120,19 @@
 			  "swan.CustomSSS": {
 				"type": "object",
 				"properties": {
-					"swan.Sources": {
+					"Sources": {
 						"type": "array",
 						"items": {
 							"type":"string"
 						}
 					},
-					"swan.Sinks": {
+					"Sinks": {
 						"type": "array",
 						"items": {
 							"type":"string"
 						}
 					},
-					"swan.Santizers": {
+					"Santizers": {
 						"type": "array",
 						"items": {
 							"type":"string"

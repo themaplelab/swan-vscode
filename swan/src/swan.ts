@@ -9,6 +9,7 @@ let GLOBAL_SOCKET : any = undefined;
 let SWAN_STARTED = false;
 let PROJECT_COMPILED = false; // Includes SDG step.
 let COMPILING = false;
+vscode.commands.executeCommand("setContext", "recompileON", false);
 
 let timer : NodeJS.Timeout;
 
@@ -98,11 +99,13 @@ export function activate(context: vscode.ExtensionContext) {
 					vscode.window.showInformationMessage("Disconnected from SWAN JVM");
 					SWAN_STARTED = false;
 					PROJECT_COMPILED = false;
+					vscode.commands.executeCommand("setContext", "recompileON", false);
 					COMPILING = false; 
 				});
 
 				socket.on('generatedSDG', () => {
 					PROJECT_COMPILED = true;
+					vscode.commands.executeCommand("setContext", "recompileON", true);
 					vscode.window.showInformationMessage("Done compilation");
 					vscode.commands.executeCommand('swan.runTaintAnalysis');
 				});
@@ -243,6 +246,10 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
+	let recompile = vscode.commands.registerCommand('swan.recompile', () => {
+		vscode.commands.executeCommand("swan.compile");
+	});
+
 	// Command that opens the selected file in the file tree. 
 	// TODO: Add a position.
 	let openFileCommand = vscode.commands.registerCommand('openFile', (filename : string) => {
@@ -257,6 +264,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(startSWAN);
 	context.subscriptions.push(stopSWAN);
 	context.subscriptions.push(generateDataFlow);
+	context.subscriptions.push(recompile);
 }
 
 export function deactivate() {

@@ -20,6 +20,10 @@
 				"title": "Start SWAN"
 			},
 			{
+				"command": "swan.recompile",
+				"title": "Recompile"
+			},
+			{
 				"command": "swan.stopSWAN",
 				"title": "Stop SWAN"
 			},
@@ -54,12 +58,21 @@
 				{
 					"command": "swan.runTaintAnalysis",
 					"when": "view == taintAnalysisSideBar"
+				},
+				{
+					"command": "swan.recompile",
+					"when": "recompileON"
 				}
 			],
 			"commandPalette": [
 				{
 					"command": "swan.startSWAN",
 					"title": "Start SWAN",
+					"when": "false"
+				},
+				{
+					"command": "swan.recompile",
+					"title": "Recompile",
 					"when": "false"
 				},
 				{

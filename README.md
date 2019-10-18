@@ -5,9 +5,14 @@
 SWAN is a static program analysis framework for analyzing Swift applications using [WALA](https://github.com/wala/WALA) as the analysis core. This repository contains the VSCode extension source for SWAN, which acts as a driver and results viewer for running taint analysis on Swift applications.
 
 ## Get started
+
+**You must have [SWAN](https://github.com/themaplelab/swan) installed to use this extension.**
+
 1. Clone this repository
-2. Open `swan/` in VSCode.
+2. Open `swan/` in VSCode
 3. Run `npm install` in the same directory
 4. Press `F5` inside the editor to start the extension
+5. Configure the extension in _Settings_
+6. Run the analysis by accessing the tree menu options (triple dots on the top-right) in the SWAN tab
 
 More information on VSCode extensions is available [here](https://code.visualstudio.com/api/get-started/your-first-extension).

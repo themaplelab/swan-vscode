@@ -16,3 +16,7 @@ SWAN is a static program analysis framework for analyzing Swift applications usi
 6. Run the analysis by accessing the tree menu options (triple dots on the top-right) in the SWAN tab
 
 More information on VSCode extensions is available [here](https://code.visualstudio.com/api/get-started/your-first-extension).
+
+____________________
+
+**Please note this extension is WIP and has not been published yet.** 

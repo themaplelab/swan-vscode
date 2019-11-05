@@ -8,6 +8,7 @@ var path = require("path");
 
 export interface TaintAnalysisPathsJSON {
 	paths: PathsEntity[];
+	functions: string[];
 }
 export interface PathsEntity {
 	pathName: string;
@@ -15,7 +16,10 @@ export interface PathsEntity {
 }
 export interface ElementEntity {
 	file: string;
-	location: string;
+	fl: number;
+	fc: number;
+	ll: number;
+	lc: number;
 }
 
 export class TaintAnalysisPathProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
@@ -31,18 +35,20 @@ export class TaintAnalysisPathProvider implements vscode.TreeDataProvider<vscode
 			let counter : number = 0;
 			let elements : PathElement[] = [];
 			p.elements.forEach((element : ElementEntity) => {
+				// -1 since needs to be zero-based.
+				let range : vscode.Range = new vscode.Range(element.fl - 1, element.fc - 1, element.ll - 1, element.lc - 1);
 				if (counter === 0) {
 					elements.push(new SourceElement(
 						path.parse(element.file).base, 
-						new commands.OpenFileCommand(element.file)));
+						new commands.OpenFileCommand(element.file, range)));
 				} else if (counter === p.elements.length - 1) {
 					elements.push(new SinkElement(
 						path.parse(element.file).base, 
-						new commands.OpenFileCommand(element.file)));
+						new commands.OpenFileCommand(element.file, range)));
 				} else {
 					elements.push(new IntermediateElement(
 						path.parse(element.file).base, 
-						new commands.OpenFileCommand(element.file)));
+						new commands.OpenFileCommand(element.file, range)));
 				}
 				counter++;
 			});

@@ -10,6 +10,8 @@ SWAN is a static program analysis framework for analyzing Swift applications usi
 
 **You must have [SWAN](https://github.com/themaplelab/swan) installed to use this extension.**
 
+**Please use the most active branch of SWAN since this extension is still actively being developed.**
+
 1. Clone this repository
 2. Open `swan/` in VSCode
 3. Run `npm install` in the same directory

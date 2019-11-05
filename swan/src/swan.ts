@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as tree from './tree';
+import { TaintAnalysisPathsJSON } from './tree';
 const exec = require('child_process').exec;
 const io = require('socket.io')();
 const fs = require('fs');
@@ -10,6 +11,8 @@ let SWAN_STARTED = false;
 let PROJECT_COMPILED = false; // Includes SDG step.
 let COMPILING = false;
 vscode.commands.executeCommand("setContext", "recompileON", false);
+
+let functionNames : string[] = ["testTaint.source() -> Swift.String"];
 
 let timer : NodeJS.Timeout;
 
@@ -88,8 +91,9 @@ export function activate(context: vscode.ExtensionContext) {
 				vscode.commands.executeCommand("swan.compile");
 
 				// Handle when the JVM returns the taint analysis results.
-				socket.on('taintAnalysisResults', (json : any) => {
+				socket.on('taintAnalysisResults', (json : TaintAnalysisPathsJSON) => {
 					pathProvider.setPaths(json);
+					functionNames = json.functions;
 					vscode.commands.executeCommand('swan.taintAnalysisResults');
 				});
 				
@@ -250,12 +254,23 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.executeCommand("swan.compile");
 	});
 
-	// Command that opens the selected file in the file tree. 
-	// TODO: Add a position.
-	let openFileCommand = vscode.commands.registerCommand('openFile', (filename : string) => {
+	let openFileCommand = vscode.commands.registerCommand('openFile', (filename : string, options : vscode.TextDocumentShowOptions) => {
 		vscode.workspace.openTextDocument(filename).then(doc => {
-			vscode.window.showTextDocument(doc);
+			vscode.window.showTextDocument(doc, options);
 		});
+	});
+
+	let provider = vscode.languages.registerCompletionItemProvider({ language: 'jsonc', scheme: 'vscode-userdata' }, {
+
+		provideCompletionItems(document: vscode.TextDocument, position: vscode.Position, token: vscode.CancellationToken, context: vscode.CompletionContext) {
+			let completions : vscode.CompletionItem[] = [];
+			functionNames.forEach((s : string) => {
+				const completionItem  = new vscode.CompletionItem('\"' + s + '\"', vscode.CompletionItemKind.Text);
+				// completionItem.commitCharacters = ['\"'];
+				completions.push(completionItem);
+			});
+			return completions;
+		}
 	});
 		
 	context.subscriptions.push(openFileCommand);
@@ -265,6 +280,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(stopSWAN);
 	context.subscriptions.push(generateDataFlow);
 	context.subscriptions.push(recompile);
+	context.subscriptions.push(provider);
 }
 
 export function deactivate() {
@@ -274,12 +290,13 @@ export function deactivate() {
 }
 
 export class OpenFileCommand implements vscode.Command {
-	title: string = 'Open File';	command: string = 'openFile';
+	title: string = 'Open File';	
+	command: string = 'openFile';
 	tooltip?: string | undefined;
 	arguments?: any[] | undefined;
 
-	constructor(filename : string) {
-		this.arguments = [filename];
+	constructor(filename : string, rng : vscode.Range) {
+		this.arguments = [filename, <vscode.TextDocumentShowOptions>({selection : rng})];
 	}
 }
 

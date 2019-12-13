@@ -240,7 +240,14 @@ export function activate(context: vscode.ExtensionContext) {
 				vscode.window.showInformationMessage("Compiling and translating Swift file...");
 			}
 
-			io.to(GLOBAL_SOCKET).emit("generateSDG", ["", "-emit-silgen", "-Onone", SWANConfig.get("SingleFilePath")]);
+			var args = ["", "-emit-silgen", "-Onone", SWANConfig.get("SingleFilePath")];
+
+			if (SWANConfig.get("SDKPath") !== "") {
+				args.push("-sdk");
+				args.push(SWANConfig.get("SDKPath"));
+			}
+
+			io.to(GLOBAL_SOCKET).emit("generateSDG", args);
 
 			if (err) {
 				vscode.window.showErrorMessage("Could not compile Swift application");

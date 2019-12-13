@@ -109,6 +109,11 @@
 				"default": "REPLACE ME",
 				"markdownDescription": "Path to the `.swift` file to analyze (\"Single file\" mode)."
 			  },
+			  "swan.SDKPath": {
+				"type": "string",
+				"default": "",
+				"markdownDescription": "SDK path **required** for **\"Single file\"** mode. Can be found by running `xcrun --show-sdk-path`."
+			  },
 			  "swan.XCodeProjectPath": {
 				"type": "string",
 				"default": "REPLACE ME",

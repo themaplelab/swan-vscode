@@ -8,7 +8,7 @@ const fs = require('fs');
 // Flags for keeping track of program state. 
 let GLOBAL_SOCKET : any = undefined;
 let SWAN_STARTED = false;
-let PROJECT_COMPILED = false; // Includes SDG step.
+let PROJECT_COMPILED = false; // Includes translation step.
 let COMPILING = false;
 vscode.commands.executeCommand("setContext", "recompileON", false);
 
@@ -107,7 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
 					COMPILING = false; 
 				});
 
-				socket.on('generatedSDG', () => {
+				socket.on('translated', () => {
 					PROJECT_COMPILED = true;
 					vscode.commands.executeCommand("setContext", "recompileON", true);
 					vscode.window.showInformationMessage("Done compilation");
@@ -197,7 +197,7 @@ export function activate(context: vscode.ExtensionContext) {
 					" -scheme " + SWANConfig.get("XCodeScheme") + " " +
 					SWANConfig.get("XCodeOptions") + 
 					" SWIFT_COMPILATION_MODE=wholemodule SWIFT_OPTIMIZATION_LEVEL=-Onone SWIFT_EXEC=" +
-					process.env.PATH_TO_SWAN + "/ca.maple.swan.translator/argumentWriter.py";
+					process.env.PATH_TO_SWAN + "/utils/argumentWriter"; // This should probably exist in the vscode extension instead.
 
 				// Async command that calls `xcodebuild` and, when finished, reads the intercepted arguments
 				// from the designated tmp file.
@@ -210,10 +210,10 @@ export function activate(context: vscode.ExtensionContext) {
 						} else {
 							fs.readFile("/tmp/SWAN_arguments.txt", {encoding: 'utf-8'}, function(err:any, args:any){
 								if (!err) {
-									// Convert args, generate SDG.
+									// Convert args, do translation.
 									convertArgs(args)
 										.then((convertedArgs) => {
-											io.to(GLOBAL_SOCKET).emit("generateSDG", convertedArgs);
+											io.to(GLOBAL_SOCKET).emit("doTranslation", convertedArgs);
 										})
 										.catch((e) => {
 											vscode.window.showErrorMessage("Could not convert arguments: " + e);
@@ -247,7 +247,7 @@ export function activate(context: vscode.ExtensionContext) {
 				args.push(SWANConfig.get("SDKPath"));
 			}
 
-			io.to(GLOBAL_SOCKET).emit("generateSDG", args);
+			io.to(GLOBAL_SOCKET).emit("doTranslation", args);
 
 			if (err) {
 				vscode.window.showErrorMessage("Could not compile Swift application");

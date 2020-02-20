@@ -10,7 +10,7 @@ SWAN is a static program analysis framework for analyzing Swift applications usi
 
 **This repo should already be downloaded and installed in `packages/` dir of SWAN.**
 
-1. Open `swan/` in VSCode
+1. Open `swan/packages/swan-vscode/swan/` in VSCode
 2. Press `F5` inside the editor to start the extension
 3. Configure the extension in _Settings_
 4. Run the analysis by accessing the tree menu options (triple dots on the top-right) in the SWAN tab

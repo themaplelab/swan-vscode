@@ -241,7 +241,9 @@ export function activate(context: vscode.ExtensionContext) {
 									// Convert args, do translation.
 									convertArgs(args)
 										.then((convertedArgs) => {
-											currentIO.to(GLOBAL_SOCKET).emit("doTranslation", convertedArgs);
+                                            currentIO.to(GLOBAL_SOCKET).emit("doTranslation", 
+                                                convertedArgs, 
+                                                SWANConfig.get("AnalysisEngine"));
 										})
 										.catch((e) => {
                                             reportError("Could not convert arguments: " + e);

@@ -33,7 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
 	// 3. Run taint analysis
 	let runTaintAnalysis = vscode.commands.registerCommand('swan.runTaintAnalysis', () => {
 		if (SWAN_STARTED && PROJECT_COMPILED && !COMPILING) {
-			vscode.window.showInformationMessage("Running taint analysis...");
+            reportInfo("Running taint analysis..." + '\n');
 			const SWANConfig = vscode.workspace.getConfiguration('swan');
 			let sss : SSSJson = {"Sources" : [], "Sinks" : [], "Sanitizers" : []};
 			if (SWANConfig.get('TaintAnalysisMode') === "Refined") {
@@ -59,8 +59,8 @@ export function activate(context: vscode.ExtensionContext) {
 			{
 				treeDataProvider: pathProvider
 			}
-		);
-		vscode.window.showInformationMessage("Finished taint analysis...");
+        );
+        reportInfo("Finished taint analysis...");
 	});
 
 	let startSWAN = vscode.commands.registerCommand('swan.startSWAN', () => {
@@ -68,11 +68,13 @@ export function activate(context: vscode.ExtensionContext) {
 			// Make sure user has PATH_TO_SWAN set which is required by both the
 			// extension and SWAN itself.
 			if (process.env.PATH_TO_SWAN === undefined) {
+                let errStr = "Environment variable PATH_TO_SWAN not set!";
 				vscode.window.showErrorMessage(
-					"Environment variable PATH_TO_SWAN not set!", 'Learn More')
+					errStr, 'Learn More')
 					.then(_ => {
 						vscode.env.openExternal(vscode.Uri.parse('https://github.com/themaplelab/swan'));
-					});
+                    });
+                console.error(errStr);
 				return;
 			}
 
@@ -80,8 +82,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 				// Keep track of sole connection.
 				GLOBAL_SOCKET = socket.id;
-				
-				vscode.window.showInformationMessage("Connected to SWAN JVM");
+                
+                reportInfo("Connected to SWAN JVM");
 				SWAN_STARTED = true;
 
 				// Clear the timer since we have connected to the JVM.
@@ -99,8 +101,8 @@ export function activate(context: vscode.ExtensionContext) {
 				
 				// When disconnected, stop listening.
 				socket.on('disconnect', (data : any) => {
-					io.off();
-					vscode.window.showInformationMessage("Disconnected from SWAN JVM");
+                    io.off();
+                    reportInfo("Disconnected from SWAN JVM");
 					SWAN_STARTED = false;
 					PROJECT_COMPILED = false;
 					vscode.commands.executeCommand("setContext", "recompileON", false);
@@ -109,26 +111,26 @@ export function activate(context: vscode.ExtensionContext) {
 
 				socket.on('translated', () => {
 					PROJECT_COMPILED = true;
-					vscode.commands.executeCommand("setContext", "recompileON", true);
-					vscode.window.showInformationMessage("Done compilation");
+                    vscode.commands.executeCommand("setContext", "recompileON", true);
+                    reportInfo("Done compilation");
 					vscode.commands.executeCommand('swan.runTaintAnalysis');
 				});
 
 				// JVM should report any errors to this handler.
 				socket.on('error', (e : any) => {
-					vscode.window.showErrorMessage("JVM error: " + e);
+                    reportError("JVM error: " + e);
 				});
 			});
 			io.listen(4040);
 
-			vscode.window.showInformationMessage("Looking for existing SWAN JVM process...");
+            reportInfo("Looking for existing SWAN JVM process...");
 
 			// Wait 5 seconds before starting up a new JVM to see if there is one running already.
 			// To debug the JVM, it must be already running so this step is necessary. May be
 			// blown away later to minimize inconvenience to the user.
 			timer = setTimeout((() => {
 				if (!SWAN_STARTED) {
-					vscode.window.showInformationMessage("Starting SWAN JVM...");
+                    reportInfo("Starting SWAN JVM...");
 
 					const command = 
 						"/." + process.env.PATH_TO_SWAN + 
@@ -137,19 +139,20 @@ export function activate(context: vscode.ExtensionContext) {
 						vscode.workspace.getConfiguration('swan').get('JVMOptions') + "\"";
 
 					// Async gradle command execution. We only know if this command truly worked
-					// if we get the "connection" socket event.
+                    // if we get the "connection" socket event.
+                    console.log("Running: " + command + '\n');
 					let script = exec(command, {encoding : 'utf-8'},  
 						(error : any, stdout : any , stderr : any) => {
-							if (error !== null) {
-								vscode.window.showErrorMessage("Something went wrong with the JVM: " + stderr);
+							if (error !== null) {                  
+                                reportError("Something went wrong with the JVM: " + stderr);
 								SWAN_STARTED = false;
 							}
 						});
 				}
 			}), 5000); // Generous 5 seconds since this is how long it can take to see if a JVM is already listening.
 		} catch (e) {
-			// Just in case.
-			vscode.window.showWarningMessage("Could not start SWAN: " + e);
+            // Just in case.
+            reportWarning("Could not start SWAN: " + e);
 			SWAN_STARTED = false;
 		}
 	});
@@ -160,7 +163,7 @@ export function activate(context: vscode.ExtensionContext) {
 		try {
 			io.to(GLOBAL_SOCKET).emit("disconnect");
 		} catch (e) {
-			vscode.window.showErrorMessage("Could not stop SWAN JVM: " + e);
+            reportError("Could not stop SWAN JVM: " + e);
 		}
 	});
 
@@ -175,18 +178,18 @@ export function activate(context: vscode.ExtensionContext) {
 			let err = false;
 
 			if (SWANConfig.get("XCodeScheme") === "REPLACE ME") {
-				vscode.window.showErrorMessage("XCode scheme not set!");
+                reportError("XCode scheme not set!");
 				err = true;
 			}
 
 			if (SWANConfig.get("XCodeProjectPath") === "REPLACE ME") {
-				vscode.window.showErrorMessage("XCode project path not set!");
+                reportError("XCode project path not set!");
 				err = true;
 			}
 
 			if (!err) {
 
-				vscode.window.showInformationMessage("Compiling and translating XCode project. This may take a while...");
+                reportInfo("Compiling and translating XCode project. This may take a while...");
 
 				// Flag in case the user tries to compile again during the compilation process.
 				COMPILING = true;
@@ -200,12 +203,13 @@ export function activate(context: vscode.ExtensionContext) {
 					process.env.PATH_TO_SWAN + "/utils/argumentWriter"; // This should probably exist in the vscode extension instead.
 
 				// Async command that calls `xcodebuild` and, when finished, reads the intercepted arguments
-				// from the designated tmp file.
+                // from the designated tmp file.
+                console.log("Running: " + command + '\n');
 				let script = exec(command, {encoding : 'utf-8'},  
 					(error : any, stdout : any , stderr : any) => {
 						if (error !== null) {
-							vscode.window.showErrorMessage("Could not build XCode project: " + stderr);
-							COMPILING = false;
+                            reportError("Could not build XCode project: " + stderr);
+                            COMPILING = false;
 							return;
 						} else {
 							fs.readFile("/tmp/SWAN_arguments.txt", {encoding: 'utf-8'}, function(err:any, args:any){
@@ -216,28 +220,28 @@ export function activate(context: vscode.ExtensionContext) {
 											io.to(GLOBAL_SOCKET).emit("doTranslation", convertedArgs);
 										})
 										.catch((e) => {
-											vscode.window.showErrorMessage("Could not convert arguments: " + e);
+                                            reportError("Could not convert arguments: " + e);
 										});
 
 								} else {
-									vscode.window.showErrorMessage("Could not open intercept swiftc arguments!");
+                                    reportError("Could not open intercept swiftc arguments!");
 								}
 								COMPILING = false;
 							});
 						}
 					});
 			} else { 
-				vscode.window.showErrorMessage("Could not compile XCode application");
+                reportError("Could not compile XCode application");
 				return; 
 			}
 		} else { // "Single file" mode
 			let err = false;
 			if (SWANConfig.get("SingleFilePath") === "REPLACE ME") {
-				vscode.window.showErrorMessage("Single file path not set!");
+                reportError("Single file path not set!");
 			}
 			
 			if (!err) {
-				vscode.window.showInformationMessage("Compiling and translating Swift file...");
+                reportInfo("Compiling and translating Swift file...");
 			}
 
 			var args = ["", "-emit-silgen", "-Onone", SWANConfig.get("SingleFilePath")];
@@ -250,7 +254,7 @@ export function activate(context: vscode.ExtensionContext) {
 			io.to(GLOBAL_SOCKET).emit("doTranslation", args);
 
 			if (err) {
-				vscode.window.showErrorMessage("Could not compile Swift application");
+                reportError("Could not compile Swift application");
 				return;
 			}
 			
@@ -310,7 +314,8 @@ export class OpenFileCommand implements vscode.Command {
 async function convertArgs(args : string) : Promise<string[]> {
 	return new Promise((resolve, reject) => {
 		const command = 
-		"swiftc " + args + " -Onone -whole-module-optimization -driver-print-jobs";
+        "swiftc " + args + " -Onone -whole-module-optimization -driver-print-jobs";
+        console.log("Running: " + command + '\n');
 		let script = exec(command, {encoding : 'utf-8'},  
 			(error : any, jobs : any , stderr : any) => {
 				jobs = jobs.replace(/(\r\n|\n|\r)/gm,"");
@@ -328,4 +333,19 @@ async function convertArgs(args : string) : Promise<string[]> {
 				}
 			});
 	});	
+}
+
+function reportInfo(s : String) {
+    vscode.window.showInformationMessage(<any>s);
+    console.info(s + '\n');
+}
+
+function reportError(s : String) {
+    vscode.window.showErrorMessage(<any>s);
+    console.error(s + '\n');
+}
+
+function reportWarning(s : String) {
+    vscode.window.showWarningMessage(<any>s);
+    console.warn(s + '\n');
 }

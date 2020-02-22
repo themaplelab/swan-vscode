@@ -80,8 +80,6 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
             }
 
-            // TODO: Set heartbeat/timeout/whatver to be 15-20 minutes since
-            //  the native call can take that long and we are using blocking sockets.
             let io = socketIO({forceNew : true});
 
             currentIO = io;
@@ -119,7 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
 				
 				// When disconnected, stop listening and reset everything.
 				socket.on('disconnect', (data : any) => {
-                    reportIOEvent("disconnect");
+                    reportIOEvent("disconnect: " + data);
                     reportInfo("Disconnected from SWAN JVM");
                     resetAll();
                     io.close();

@@ -90,7 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
                 // Reject connections if a JVM is (presumably) already running.
                 if (SWAN_STARTED) {
                     io.to(socket.id).emit("rejected");
-                    reportWarning("Rejected unexpected connection.")
+                    reportWarning("Rejected unexpected connection.");
                     return;
                 }
 
@@ -176,7 +176,7 @@ export function activate(context: vscode.ExtensionContext) {
     // This command can be invoked by a UI command after the JVM is connected to.
 	let stopSWAN = vscode.commands.registerCommand('swan.stopSWAN', () => {
 		try {
-            reportInfo("Attempting to disconnect from JVM...")
+            reportInfo("Attempting to disconnect from JVM...");
             currentIO.to(GLOBAL_SOCKET).emit("disconnect");
             setTimeout(function() {
                 if (SWAN_STARTED) {

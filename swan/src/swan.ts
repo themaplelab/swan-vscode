@@ -39,13 +39,15 @@ export function activate(context: vscode.ExtensionContext) {
 			const SWANConfig = vscode.workspace.getConfiguration('swan');
 			let sss : SSSJson = {"Sources" : [], "Sinks" : [], "Sanitizers" : []};
 			if (SWANConfig.get('TaintAnalysisMode') === "Refined") {
-				let CustomSSS : any = SWANConfig.get("CustomSSS");
+                let CustomSSS : any = SWANConfig.get("CustomSSS");
+                console.log(CustomSSS);
 				sss = {
-					"Sources" : (CustomSSS["Sources"] !== undefined) ? CustomSSS["Sources"] : [], 
-					"Sinks" : (CustomSSS["Sinks"] !== undefined) ? CustomSSS["Sinks"] : [], 
-					"Sanitizers" : (CustomSSS["Sanitizers"] !== undefined) ? CustomSSS["Sanitizers"] : []
-				};
-			}
+					"Sources" : (CustomSSS["swan.Sources"] !== undefined) ? CustomSSS["swan.Sources"] : [], 
+					"Sinks" : (CustomSSS["swan.Sinks"] !== undefined) ? CustomSSS["swan.Sinks"] : [], 
+					"Sanitizers" : (CustomSSS["swan.Sanitizers"] !== undefined) ? CustomSSS["swan.Sanitizers"] : []
+                };
+                console.log(sss);
+            }
 			currentIO.to(GLOBAL_SOCKET).emit("runTaintAnalysis", sss);
 		} else if (!SWAN_STARTED && !PROJECT_COMPILED && !COMPILING) {
 			vscode.commands.executeCommand("swan.startSWAN");
@@ -268,14 +270,14 @@ export function activate(context: vscode.ExtensionContext) {
                 reportInfo("Compiling and translating Swift file...");
 			}
 
-			var args = ["", "-emit-silgen", "-Onone", SWANConfig.get("SingleFilePath")];
+			var args = ["-emit-silgen", "-Onone", SWANConfig.get("SingleFilePath")];
 
 			if (SWANConfig.get("SDKPath") !== "") {
 				args.push("-sdk");
 				args.push(SWANConfig.get("SDKPath"));
-			}
+            }
 
-            currentIO.to(GLOBAL_SOCKET).emit("doTranslation", args);
+            currentIO.to(GLOBAL_SOCKET).emit("doTranslation", args, SWANConfig.get("AnalysisEngine"));
 
 			if (err) {
                 reportError("Could not compile Swift application");
@@ -340,7 +342,7 @@ export class OpenFileCommand implements vscode.Command {
 async function convertArgs(args : string) : Promise<string[]> {
 	return new Promise((resolve, reject) => {
 		const command = 
-        "swiftc " + args + " -Onone -whole-module-optimization -driver-print-jobs";
+        "swiftc " + args + " -driver-print-jobs";
         reportInfo("Running: " + command);
 		let script = exec(command, {encoding : 'utf-8'},  
 			(error : any, jobs : any , stderr : any) => {
@@ -354,7 +356,7 @@ async function convertArgs(args : string) : Promise<string[]> {
 					if (idx > -1) {
 						arrJobs = arrJobs.slice(0, idx).concat(arrJobs.slice(idx + 2, arrJobs.length));
 					}
-					arrJobs = ["", "-emit-silgen"].concat(arrJobs);
+					arrJobs = ["-emit-silgen"].concat(arrJobs);
 					resolve(arrJobs);
 				}
 			});

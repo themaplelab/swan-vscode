@@ -62,8 +62,8 @@
 				{
 					"command": "swan.recompile",
 					"when": "recompileON"
-                },
-                {
+				},
+				{
 					"command": "swan.stopSWAN",
 					"when": "swanRunning"
 				}
@@ -144,7 +144,7 @@
 					],
 					"default": "Regular",
 					"markdownDescription": "**Regular:** using known sources, sinks, and sanitizers (SSS).  **Refined:** querry-like taint analysis which uses user defined SSS. Can also be used in comibination with known SSS."
-                },
+				},
 				"swan.AnalysisEngine": {
 					"type": "string",
 					"enum": [

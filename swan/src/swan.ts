@@ -35,18 +35,16 @@ export function activate(context: vscode.ExtensionContext) {
 	// 3. Run taint analysis
 	let runTaintAnalysis = vscode.commands.registerCommand('swan.runTaintAnalysis', () => {
 		if (SWAN_STARTED && PROJECT_COMPILED && !COMPILING) {
-            reportInfo("Running taint analysis..." + '\n');
+            reportInfo("Running taint analysis...");
 			const SWANConfig = vscode.workspace.getConfiguration('swan');
 			let sss : SSSJson = {"Sources" : [], "Sinks" : [], "Sanitizers" : []};
 			if (SWANConfig.get('TaintAnalysisMode') === "Refined") {
                 let CustomSSS : any = SWANConfig.get("CustomSSS");
-                console.log(CustomSSS);
 				sss = {
 					"Sources" : (CustomSSS["swan.Sources"] !== undefined) ? CustomSSS["swan.Sources"] : [], 
 					"Sinks" : (CustomSSS["swan.Sinks"] !== undefined) ? CustomSSS["swan.Sinks"] : [], 
 					"Sanitizers" : (CustomSSS["swan.Sanitizers"] !== undefined) ? CustomSSS["swan.Sanitizers"] : []
                 };
-                console.log(sss);
             }
 			currentIO.to(GLOBAL_SOCKET).emit("runTaintAnalysis", sss);
 		} else if (!SWAN_STARTED && !PROJECT_COMPILED && !COMPILING) {
@@ -164,7 +162,7 @@ export function activate(context: vscode.ExtensionContext) {
 							if (error !== null) {                  
                                 reportError("Something went wrong with the JVM: " + stderr);
 								SWAN_STARTED = false;
-							}
+                            }
 						});
 				}
 			}), 5000); // Generous 5 seconds since this is how long it can take to see if a JVM is already listening.

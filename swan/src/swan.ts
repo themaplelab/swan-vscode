@@ -225,7 +225,7 @@ export function activate(context: vscode.ExtensionContext) {
 				// Async command that calls `xcodebuild` and, when finished, reads the intercepted arguments
                 // from the designated tmp file.
                 reportInfo("Running: " + command);
-				let script = exec(command, {encoding : 'utf-8'},  
+				let script = exec(command, {encoding : 'utf-8', cwd : process.env.PATH_TO_SWAN},  
 					(error : any, stdout: any , stderr : any) => {
 						if (error !== null) {
                             reportError("Could not build XCode project: " + stderr);

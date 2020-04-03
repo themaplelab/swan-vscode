@@ -233,7 +233,7 @@ export function activate(context: vscode.ExtensionContext) {
 							return;
 						} else {
                             currentIO.to(GLOBAL_SOCKET).emit("doTranslation", 
-                            stdout, 
+                            stdout.split(" "), 
                                 SWANConfig.get("AnalysisEngine"));
 							COMPILING = false;		
 						}

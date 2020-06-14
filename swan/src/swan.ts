@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	// Main activation event. Has three stages:
 	// 1. Start SWAN JVM
-	// 2. Compile Swift file or XCode project
+	// 2. Compile Swift file.
 	// 3. Run taint analysis
 	let runTaintAnalysis = vscode.commands.registerCommand('swan.runTaintAnalysis', () => {
 		if (SWAN_STARTED && PROJECT_COMPILED && !COMPILING) {
@@ -150,7 +150,7 @@ export function activate(context: vscode.ExtensionContext) {
                     reportInfo("Starting SWAN JVM...");
 
 					const command = 
-						"/." + process.env.PATH_TO_SWAN + "/bin/swan " +
+						"/." + process.env.PATH_TO_SWAN + "/bin/swan-server " +
 						vscode.workspace.getConfiguration('swan').get('JVMOptions');
 
 					// Async gradle command execution. We only know if this command truly worked
@@ -188,84 +188,34 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	// This command compiles the Swift file or XCode project.
+	// This command compiles the Swift file.
 	let generateDataFlow = vscode.commands.registerCommand('swan.compile', () => {
 		// Make sure that the settings needed to compile for the selected
 		// mode are set.
 		const SWANConfig = vscode.workspace.getConfiguration('swan');
 
-		if (SWANConfig.get("ProjectType") === "XCode Project") {
+        let err = false;
+        if (SWANConfig.get("SwiftFilePath") === "REPLACE ME") {
+            reportError("Swift file path not set!");
+        }
+        
+        if (!err) {
+            reportInfo("Compiling and translating Swift file...");
+        }
 
-			let err = false;
+        var args = ["-emit-silgen", "-Onone", SWANConfig.get("SwiftFilePath")];
 
-			if (SWANConfig.get("XCodeScheme") === "REPLACE ME") {
-                reportError("XCode scheme not set!");
-				err = true;
-			}
+        if (SWANConfig.get("SDKPath") !== "") {
+            args.push("-sdk");
+            args.push(SWANConfig.get("SDKPath"));
+        }
 
-			if (SWANConfig.get("XCodeProjectPath") === "REPLACE ME") {
-                reportError("XCode project path not set!");
-				err = true;
-			}
+        currentIO.to(GLOBAL_SOCKET).emit("doTranslation", args, "WALA");
 
-			if (!err) {
-
-                reportInfo("Compiling and translating XCode project. This may take a while...");
-
-				// Flag in case the user tries to compile again during the compilation process.
-                COMPILING = true;
-                
-                const command = 
-                    "/." + process.env.PATH_TO_SWAN + "/utils/xcodebuild-shim -project " + 
-					SWANConfig.get("XCodeProjectPath") + 
-					" -scheme " + SWANConfig.get("XCodeScheme") + " -xcode-options \'" +
-					SWANConfig.get("XCodeOptions") + "\'"
-
-				// Async command that calls `xcodebuild` and, when finished, reads the intercepted arguments
-                // from the designated tmp file.
-                reportInfo("Running: " + command);
-				let script = exec(command, {encoding : 'utf-8', cwd : process.env.PATH_TO_SWAN},  
-					(error : any, stdout: any , stderr : any) => {
-						if (error !== null) {
-                            reportError("Could not build XCode project: " + stderr);
-                            COMPILING = false;
-							return;
-						} else {
-                            currentIO.to(GLOBAL_SOCKET).emit("doTranslation", 
-                            stdout.split(" "), 
-                            "WALA");
-							COMPILING = false;		
-						}
-					});
-			} else { 
-                reportError("Could not compile XCode application");
-				return; 
-			}
-		} else { // "Single file" mode
-			let err = false;
-			if (SWANConfig.get("SingleFilePath") === "REPLACE ME") {
-                reportError("Single file path not set!");
-			}
-			
-			if (!err) {
-                reportInfo("Compiling and translating Swift file...");
-			}
-
-			var args = ["-emit-silgen", "-Onone", SWANConfig.get("SingleFilePath")];
-
-			if (SWANConfig.get("SDKPath") !== "") {
-				args.push("-sdk");
-				args.push(SWANConfig.get("SDKPath"));
-            }
-
-            currentIO.to(GLOBAL_SOCKET).emit("doTranslation", args, "WALA");
-
-			if (err) {
-                reportError("Could not compile Swift application");
-				return;
-			}
-			
-		}
+        if (err) {
+            reportError("Could not compile Swift application");
+            return;
+        }
 	});
 
 	let recompile = vscode.commands.registerCommand('swan.recompile', () => {
@@ -290,10 +240,6 @@ export function activate(context: vscode.ExtensionContext) {
 			return completions;
 		}
     });
-    
-    let settings = vscode.commands.registerCommand('swan.openSettings', () => {
-		vscode.commands.executeCommand('workbench.action.openSettings')
-	});
 		
 	context.subscriptions.push(openFileCommand);
 	context.subscriptions.push(runTaintAnalysis);
@@ -303,7 +249,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(generateDataFlow);
 	context.subscriptions.push(recompile);
     context.subscriptions.push(provider);
-    context.subscriptions.push(settings);
 }
 
 function resetAll() {

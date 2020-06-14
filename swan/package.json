@@ -10,8 +10,7 @@
 		"Other"
 	],
 	"activationEvents": [
-        "onCommand:swan.runTaintAnalysis",
-        "onCommand:swan.openSettings"
+        "onCommand:swan.runTaintAnalysis"
 	],
 	"main": "./out/swan.js",
 	"contributes": {
@@ -35,10 +34,6 @@
 			{
 				"command": "swan.compile",
 				"title": "Compile"
-            },
-            {
-                "command": "swan.openSettings",
-                "title": "Settings"
             }
 		],
 		"viewsContainers": {
@@ -71,11 +66,7 @@
 				{
 					"command": "swan.stopSWAN",
 					"when": "swanRunning"
-                },
-				{
-					"command": "swan.openSettings",
-					"when": "view == taintAnalysisSideBar"
-				}
+                }
 			],
 			"commandPalette": [
 				{
@@ -102,12 +93,7 @@
 					"command": "swan.runTaintAnalysis",
 					"when": "false",
 					"title": "Run Taint Analysis"
-                },
-				{
-					"command": "swan.openSettings",
-					"when": "false",
-					"title": "Settings"
-				}
+                }
 			]
 		},
 		"configuration": {
@@ -135,21 +121,6 @@
 					"type": "string",
 					"default": "",
 					"markdownDescription": "Full SDK path **required** for **\"Single file\"** mode. Can be found by running `xcrun --show-sdk-path`."
-				},
-				"swan.XCodeProjectPath": {
-					"type": "string",
-					"default": "REPLACE ME",
-					"markdownDescription": "Full Path to your `.xcodeproj` to analyze (\"XCode Project mode\")."
-				},
-				"swan.XCodeOptions": {
-					"type": "string",
-					"default": "CODE_SIGN_IDENTITY=\"\" CODE_SIGNING_REQUIRED=NO CODE_SIGNING_ALLOWED=\"NO\"",
-					"markdownDescription": "Extra xcodebuild options. `-project`, `-scheme`, `clean`, `build`, `SWIFT_OPTIMIZATION_LEVEL`, `SWIFT_EXEC`, `SWIFT_COMPILATION_MODE` are already defined elsewhere."
-				},
-				"swan.XCodeScheme": {
-					"type": "string",
-					"default": "REPLACE ME",
-					"markdownDescription": "**REQUIRED:** `-scheme <...>` parameter to `xcodebuild`."
 				},
 				"swan.TaintAnalysisMode": {
 					"type": "string",

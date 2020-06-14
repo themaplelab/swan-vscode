@@ -145,14 +145,13 @@ export function activate(context: vscode.ExtensionContext) {
 			// To debug the JVM, it must be already running so this step is necessary. May be
 			// blown away later to minimize inconvenience to the user.
 			timer = setTimeout((() => {
+
 				if (!SWAN_STARTED) {
                     reportInfo("Starting SWAN JVM...");
 
 					const command = 
-						"/." + process.env.PATH_TO_SWAN + 
-						"/gradlew run -p " + process.env.PATH_TO_SWAN + " " +
-						"-Dorg.gradle.jvmargs=\"" + 
-						vscode.workspace.getConfiguration('swan').get('JVMOptions') + "\"";
+						"/." + process.env.PATH_TO_SWAN + "/bin/swan " +
+						vscode.workspace.getConfiguration('swan').get('JVMOptions');
 
 					// Async gradle command execution. We only know if this command truly worked
                     // if we get the "connection" socket event.
@@ -234,7 +233,7 @@ export function activate(context: vscode.ExtensionContext) {
 						} else {
                             currentIO.to(GLOBAL_SOCKET).emit("doTranslation", 
                             stdout.split(" "), 
-                                SWANConfig.get("AnalysisEngine"));
+                            "WALA");
 							COMPILING = false;		
 						}
 					});
@@ -259,7 +258,7 @@ export function activate(context: vscode.ExtensionContext) {
 				args.push(SWANConfig.get("SDKPath"));
             }
 
-            currentIO.to(GLOBAL_SOCKET).emit("doTranslation", args, SWANConfig.get("AnalysisEngine"));
+            currentIO.to(GLOBAL_SOCKET).emit("doTranslation", args, "WALA");
 
 			if (err) {
                 reportError("Could not compile Swift application");
@@ -290,6 +289,10 @@ export function activate(context: vscode.ExtensionContext) {
 			});
 			return completions;
 		}
+    });
+    
+    let settings = vscode.commands.registerCommand('swan.openSettings', () => {
+		vscode.commands.executeCommand('workbench.action.openSettings')
 	});
 		
 	context.subscriptions.push(openFileCommand);
@@ -299,7 +302,8 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(stopSWAN);
 	context.subscriptions.push(generateDataFlow);
 	context.subscriptions.push(recompile);
-	context.subscriptions.push(provider);
+    context.subscriptions.push(provider);
+    context.subscriptions.push(settings);
 }
 
 function resetAll() {

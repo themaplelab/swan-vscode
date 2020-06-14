@@ -10,7 +10,8 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:swan.runTaintAnalysis"
+        "onCommand:swan.runTaintAnalysis",
+        "onCommand:swan.openSettings"
 	],
 	"main": "./out/swan.js",
 	"contributes": {
@@ -34,7 +35,11 @@
 			{
 				"command": "swan.compile",
 				"title": "Compile"
-			}
+            },
+            {
+                "command": "swan.openSettings",
+                "title": "Settings"
+            }
 		],
 		"viewsContainers": {
 			"activitybar": [
@@ -66,6 +71,10 @@
 				{
 					"command": "swan.stopSWAN",
 					"when": "swanRunning"
+                },
+				{
+					"command": "swan.openSettings",
+					"when": "view == taintAnalysisSideBar"
 				}
 			],
 			"commandPalette": [
@@ -93,6 +102,11 @@
 					"command": "swan.runTaintAnalysis",
 					"when": "false",
 					"title": "Run Taint Analysis"
+                },
+				{
+					"command": "swan.openSettings",
+					"when": "false",
+					"title": "Settings"
 				}
 			]
 		},
@@ -101,7 +115,8 @@
 			"properties": {
 				"swan.JVMOptions": {
 					"type": "string",
-					"default": ""
+                    "default": "",
+                    "markdownDescription": "Options given to SWAN executable."
 				},
 				"swan.ProjectType": {
 					"type": "string",
@@ -114,17 +129,17 @@
 				"swan.SingleFilePath": {
 					"type": "string",
 					"default": "REPLACE ME",
-					"markdownDescription": "Path to the `.swift` file to analyze (\"Single file\" mode)."
+					"markdownDescription": "Full path to the `.swift` file to analyze (\"Single file\" mode)."
 				},
 				"swan.SDKPath": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "SDK path **required** for **\"Single file\"** mode. Can be found by running `xcrun --show-sdk-path`."
+					"markdownDescription": "Full SDK path **required** for **\"Single file\"** mode. Can be found by running `xcrun --show-sdk-path`."
 				},
 				"swan.XCodeProjectPath": {
 					"type": "string",
 					"default": "REPLACE ME",
-					"markdownDescription": "Path to your `.xcodeproj` to analyze (\"XCode Project mode\")."
+					"markdownDescription": "Full Path to your `.xcodeproj` to analyze (\"XCode Project mode\")."
 				},
 				"swan.XCodeOptions": {
 					"type": "string",
@@ -144,15 +159,6 @@
 					],
 					"default": "Regular",
 					"markdownDescription": "**Regular:** using known sources, sinks, and sanitizers (SSS).  **Refined:** querry-like taint analysis which uses user defined SSS. Can also be used in comibination with known SSS."
-				},
-				"swan.AnalysisEngine": {
-					"type": "string",
-					"enum": [
-						"WALA",
-						"SPDS"
-					],
-					"default": "WALA",
-					"markdownDescription": "**WALA:** Use T.J. Watson Libraries for Analysis (WALA) as the analysis engine. WALA support is incomplete, but works for simple tests. **SPDS:** Use Synchronized Pushdown Systems (SPDS) as the analysis core. This is WIP and only translates the IR currently."
 				},
 				"swan.CustomSSS": {
 					"type": "object",

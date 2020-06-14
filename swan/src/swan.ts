@@ -35,18 +35,16 @@ export function activate(context: vscode.ExtensionContext) {
 	// 3. Run taint analysis
 	let runTaintAnalysis = vscode.commands.registerCommand('swan.runTaintAnalysis', () => {
 		if (SWAN_STARTED && PROJECT_COMPILED && !COMPILING) {
-            reportInfo("Running taint analysis..." + '\n');
+            reportInfo("Running taint analysis...");
 			const SWANConfig = vscode.workspace.getConfiguration('swan');
 			let sss : SSSJson = {"Sources" : [], "Sinks" : [], "Sanitizers" : []};
 			if (SWANConfig.get('TaintAnalysisMode') === "Refined") {
                 let CustomSSS : any = SWANConfig.get("CustomSSS");
-                console.log(CustomSSS);
 				sss = {
 					"Sources" : (CustomSSS["swan.Sources"] !== undefined) ? CustomSSS["swan.Sources"] : [], 
 					"Sinks" : (CustomSSS["swan.Sinks"] !== undefined) ? CustomSSS["swan.Sinks"] : [], 
 					"Sanitizers" : (CustomSSS["swan.Sanitizers"] !== undefined) ? CustomSSS["swan.Sanitizers"] : []
                 };
-                console.log(sss);
             }
 			currentIO.to(GLOBAL_SOCKET).emit("runTaintAnalysis", sss);
 		} else if (!SWAN_STARTED && !PROJECT_COMPILED && !COMPILING) {
@@ -164,7 +162,7 @@ export function activate(context: vscode.ExtensionContext) {
 							if (error !== null) {                  
                                 reportError("Something went wrong with the JVM: " + stderr);
 								SWAN_STARTED = false;
-							}
+                            }
 						});
 				}
 			}), 5000); // Generous 5 seconds since this is how long it can take to see if a JVM is already listening.
@@ -216,44 +214,28 @@ export function activate(context: vscode.ExtensionContext) {
                 reportInfo("Compiling and translating XCode project. This may take a while...");
 
 				// Flag in case the user tries to compile again during the compilation process.
-				COMPILING = true;
-
-				const command = 
-					"xcodebuild clean build -project " + 
+                COMPILING = true;
+                
+                const command = 
+                    "/." + process.env.PATH_TO_SWAN + "/utils/xcodebuild-shim -project " + 
 					SWANConfig.get("XCodeProjectPath") + 
-					" -scheme " + SWANConfig.get("XCodeScheme") + " " +
-					SWANConfig.get("XCodeOptions") + 
-					" SWIFT_COMPILATION_MODE=wholemodule SWIFT_OPTIMIZATION_LEVEL=-Onone SWIFT_EXEC=" +
-					process.env.PATH_TO_SWAN + "/utils/argumentWriter"; // This should probably exist in the vscode extension instead.
+					" -scheme " + SWANConfig.get("XCodeScheme") + " -xcode-options \'" +
+					SWANConfig.get("XCodeOptions") + "\'"
 
 				// Async command that calls `xcodebuild` and, when finished, reads the intercepted arguments
                 // from the designated tmp file.
                 reportInfo("Running: " + command);
-				let script = exec(command, {encoding : 'utf-8'},  
-					(error : any, stdout : any , stderr : any) => {
+				let script = exec(command, {encoding : 'utf-8', cwd : process.env.PATH_TO_SWAN},  
+					(error : any, stdout: any , stderr : any) => {
 						if (error !== null) {
                             reportError("Could not build XCode project: " + stderr);
                             COMPILING = false;
 							return;
 						} else {
-							fs.readFile("/tmp/SWAN_arguments.txt", {encoding: 'utf-8'}, function(err:any, args:any){
-								if (!err) {
-									// Convert args, do translation.
-									convertArgs(args)
-										.then((convertedArgs) => {
-                                            currentIO.to(GLOBAL_SOCKET).emit("doTranslation", 
-                                                convertedArgs, 
-                                                SWANConfig.get("AnalysisEngine"));
-										})
-										.catch((e) => {
-                                            reportError("Could not convert arguments: " + e);
-										});
-
-								} else {
-                                    reportError("Could not open intercept swiftc arguments!");
-								}
-								COMPILING = false;
-							});
+                            currentIO.to(GLOBAL_SOCKET).emit("doTranslation", 
+                            stdout.split(" "), 
+                                SWANConfig.get("AnalysisEngine"));
+							COMPILING = false;		
 						}
 					});
 			} else { 
@@ -337,30 +319,6 @@ export class OpenFileCommand implements vscode.Command {
 	constructor(filename : string, rng : vscode.Range) {
 		this.arguments = [filename, <vscode.TextDocumentShowOptions>({selection : rng})];
 	}
-}
-
-async function convertArgs(args : string) : Promise<string[]> {
-	return new Promise((resolve, reject) => {
-		const command = 
-        "swiftc " + args + " -driver-print-jobs";
-        reportInfo("Running: " + command);
-		let script = exec(command, {encoding : 'utf-8'},  
-			(error : any, jobs : any , stderr : any) => {
-				jobs = jobs.replace(/(\r\n|\n|\r)/gm,"");
-				if (error !== null) {
-					reject(stderr);
-				} else {
-					let arrJobs : string[] = jobs.split(" ");
-					arrJobs.splice(0, 2);
-					const idx = arrJobs.indexOf("-supplementary-output-file-map");
-					if (idx > -1) {
-						arrJobs = arrJobs.slice(0, idx).concat(arrJobs.slice(idx + 2, arrJobs.length));
-					}
-					arrJobs = ["-emit-silgen"].concat(arrJobs);
-					resolve(arrJobs);
-				}
-			});
-	});	
 }
 
 function reportIOEvent(event : String) {

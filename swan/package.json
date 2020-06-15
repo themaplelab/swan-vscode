@@ -104,23 +104,15 @@
                     "default": "",
                     "markdownDescription": "Options given to SWAN executable."
 				},
-				"swan.ProjectType": {
-					"type": "string",
-					"enum": [
-						"XCode Project",
-						"Single file"
-					],
-					"default": "XCode Project"
-				},
-				"swan.SingleFilePath": {
+				"swan.SwiftFilePath": {
 					"type": "string",
 					"default": "REPLACE ME",
-					"markdownDescription": "Full path to the `.swift` file to analyze (\"Single file\" mode)."
+					"markdownDescription": "Full path to the `.swift` file to analyze."
 				},
 				"swan.SDKPath": {
 					"type": "string",
 					"default": "",
-					"markdownDescription": "Full SDK path **required** for **\"Single file\"** mode. Can be found by running `xcrun --show-sdk-path`."
+					"markdownDescription": "Full SDK path (**required**). Can be found by running `xcrun --show-sdk-path`."
 				},
 				"swan.TaintAnalysisMode": {
 					"type": "string",
